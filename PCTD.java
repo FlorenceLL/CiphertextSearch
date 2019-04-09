@@ -3,8 +3,8 @@ import java.math.BigInteger;
 import java.util.Random;
 
 /**
-* ÃÜÎÄÀà£¬ÓÃÀ´±íÊ¾ÃÜÎÄ¶şÔª×é
-*/
+ * å¯†æ–‡ç±»ï¼Œç”¨æ¥è¡¨ç¤ºå¯†æ–‡äºŒå…ƒç»„
+ */
 
 class Ciphertext {
     public BigInteger C1 = new BigInteger("0");
@@ -17,223 +17,226 @@ class Ciphertext {
 }
 
 /**
- * Ë«ÏİÃÅÍ¬Ì¬¼Ó½âÃÜËã·¨£¨Paillier cryptosystem with threshold decryption)
- * 
- * ÃÜÔ¿Éú³É£º
- * 1¡¢Ñ¡ÔñÁ½¸ö´óÖÊÊıpºÍq
- * 2¡¢¼ÆËã n = pqºÍ lambda= lcm (p - 1,q-1)
- * 3¡¢Ñ¡ÔñËæ»úÕûÊıaÊôÓÚZ*_n^2,ÇóÉú³ÉÔªg=-a^2n mod n^2
- * 4¡¢ÏµÍ³¹«¿ª²ÎÊıÎª£¨N£¬g£©
- * 5¡¢ÏµÍ³Ë½Ô¿Îªlambda£¬ÏµÍ³²¿·ÖË½Ô¿Îªlambda1,lambda2
- * 6¡¢ÓÃ»§Ë½Ô¿Îªsk
- * 7¡¢ÓÃ»§¹«Ô¿Îªpk=g^sk mod n^2
- * 
- * ¼ÓÃÜ:
- * Ñ¡ÔñËæ»úÊır
- * ¼ÆËãÃÜÎÄC=(C1,C2)  C1=pk^r(1+mN)  C2=g^r mod n^2
- * ÆäÖĞmÎªÃ÷ÎÄ
- * 
- * ÓÃ»§½âÃÜ£º
+ * åŒé™·é—¨åŒæ€åŠ è§£å¯†ç®—æ³•ï¼ˆPaillier cryptosystem with threshold decryption)
+ *
+ * å¯†é’¥ç”Ÿæˆï¼š
+ * 1ã€é€‰æ‹©ä¸¤ä¸ªå¤§è´¨æ•°på’Œq
+ * 2ã€è®¡ç®— n = pqå’Œ lambda= lcm (p - 1,q-1)
+ * 3ã€é€‰æ‹©éšæœºæ•´æ•°aå±äºZ*_n^2,æ±‚ç”Ÿæˆå…ƒg=-a^2n mod n^2
+ * 4ã€ç³»ç»Ÿå…¬å¼€å‚æ•°ä¸ºï¼ˆNï¼Œgï¼‰
+ * 5ã€ç³»ç»Ÿç§é’¥ä¸ºlambdaï¼Œç³»ç»Ÿéƒ¨åˆ†ç§é’¥ä¸ºlambda1,lambda2
+ * 6ã€ç”¨æˆ·ç§é’¥ä¸ºsk
+ * 7ã€ç”¨æˆ·å…¬é’¥ä¸ºpk=g^sk mod n^2
+ *
+ * åŠ å¯†:
+ * é€‰æ‹©éšæœºæ•°r
+ * è®¡ç®—å¯†æ–‡C=(C1,C2)  C1=pk^r(1+mN)  C2=g^r mod n^2
+ * å…¶ä¸­mä¸ºæ˜æ–‡
+ *
+ * ç”¨æˆ·è§£å¯†ï¼š
  * m=L(C1/C2^sk mod n^2)
- * 
- * ÏµÍ³½âÃÜ£º
+ *
+ * ç³»ç»Ÿè§£å¯†ï¼š
  * m = L(C1^lambda mod n^2)* lambda.modInverse(n) mod n
- * 
- * ÏµÍ³·Ö²½½âÃÜ£º
+ *
+ * ç³»ç»Ÿåˆ†æ­¥è§£å¯†ï¼š
  * step1:C11=C1^lambda1 mod n^2
  * step2:C12=C11^lambda2 mod n^2
  *       m=L(C11,C12)
- * 
- * ÆäÖĞL(u) = (u-1)/n;
+ *
+ * å…¶ä¸­L(u) = (u-1)/n;
  */
 
 public class PCTD{
-	
-	//p,qÊÇÁ½¸öËæ»úµÄÖÊÊı ;lambda = lcm(p-1, q-1)
+
+    //p,qæ˜¯ä¸¤ä¸ªéšæœºçš„è´¨æ•° ;lambda = lcm(p-1, q-1)
     private static BigInteger p,q,lambda;
-    
-    //lambda0=modInverse(lambda);lambda1,lambda2Îª·Ö½âºóµÄ²¿·ÖË½Ô¿
+
+    //lambda0=modInverse(lambda);lambda1,lambda2ä¸ºåˆ†è§£åçš„éƒ¨åˆ†ç§é’¥
     private static BigInteger lambda0,lambda1,lambda2;
-    
+
     //n=p*q
     public static BigInteger n;
-    
+
     //nsquare=n*n
     public static BigInteger nsquare;
-    
-    //gÎªÉú³ÉÔª
+
+    //gä¸ºç”Ÿæˆå…ƒ
     public static BigInteger g;
-    
-    //ÓÃ»§Ë½Ô¿
+
+    //ç”¨æˆ·ç§é’¥
     private  BigInteger sk;
-    
-    //ÓÃ»§¹«Ô¿
+
+    //ç”¨æˆ·å…¬é’¥
     public BigInteger pk;
-    
+
 
     /**
-    * ¹¹Ôì·½·¨
-    */
+     * æ„é€ æ–¹æ³•
+     */
     public PCTD() {
         KeyGeneration(1024,64);
     }
 
     /**
-    * Éú³ÉÏµÍ³¹«¿ª²ÎÊı(g,N)   ÓÃ»§¹«Ô¿pk    
-    */
+     * ç”Ÿæˆç³»ç»Ÿå…¬å¼€å‚æ•°(g,N)   ç”¨æˆ·å…¬é’¥pk
+     */
     public static void KeyGeneration(int bitLength,int certainty) {
-        
-    	//p,qÎªËæ»úÉú³ÉµÄÁ½¸ö512bitµÄ´óËØÊı
-    	p = new BigInteger(bitLength / 2, certainty, new Random());     //Éú³É²ÎÊıp(512bit)
-		q = new BigInteger(bitLength / 2, certainty, new Random());     //Éú³É²ÎÊıq(512bit)
 
-        //lambda=lcm(p-1,q-1) ×îĞ¡¹«±¶Êı
+        //p,qä¸ºéšæœºç”Ÿæˆçš„ä¸¤ä¸ª512bitçš„å¤§ç´ æ•°
+        p = new BigInteger(bitLength / 2, certainty, new Random());     //ç”Ÿæˆå‚æ•°p(512bit)
+        q = new BigInteger(bitLength / 2, certainty, new Random());     //ç”Ÿæˆå‚æ•°q(512bit)
+
+        //lambda=lcm(p-1,q-1) æœ€å°å…¬å€æ•°
         lambda = p.subtract(BigInteger.ONE).multiply(q.subtract(BigInteger.ONE))
-                  .divide(p.subtract(BigInteger.ONE)
-                           .gcd(q.subtract(BigInteger.ONE)));
+                .divide(p.subtract(BigInteger.ONE)
+                        .gcd(q.subtract(BigInteger.ONE)));
         //n=p*q
-        n = p.multiply(q); 
+        n = p.multiply(q);
         //nsquare=n^2
         nsquare = n.multiply(n);
         System.out.println("nsquare:" + nsquare);
-        
-        //lambdaµÄÄæÔª
+
+        //lambdaçš„é€†å…ƒ
         lambda0=lambda.modInverse(nsquare);
-        //·Ö½âlambda   lambda1=lambda0*lambda/2; lambda2=lambda-lambda1
-        lambda1=lambda0.multiply(lambda).divide(new BigInteger("2"));      
-		lambda2=lambda0.multiply(lambda).subtract(lambda1);               
-        
-        //aÎªËæ»úÊı£¬È¡×ÔZ*_n^2
+       
+        //åˆ†è§£lambda lambda1å’Œlambda2éšæœºç”Ÿæˆ
+        Random rand=new Random();
+        lambda1=new BigInteger(lambda0.multiply(lambda).bitLength()-1,rand);
+        lmbdaa2=lambda0.multiply(lambda).subtract(lambda1);
+
+
+        //aä¸ºéšæœºæ•°ï¼Œå–è‡ªZ*_n^2
         //g=-a^2n mod n^2
-        BigInteger a = new BigInteger("2"); 
+        BigInteger a = new BigInteger("2");
         BigInteger two = new BigInteger("2");
         g = new BigInteger("0");
-        g = (a.modPow(n.multiply(two), nsquare)).negate().mod(nsquare); 
-        
+        g = (a.modPow(n.multiply(two), nsquare)).negate().mod(nsquare);
+
     }
-    
-    /** 
-   	 * @param sk ÓÃ»§Ë½Ô¿
-   	 * @return ·µ»ØÓÃ»§¹«Ô¿
-   	 * ¹«Ô¿Éú³É
-   	 */    
+
+    /**
+     * @param sk ç”¨æˆ·ç§é’¥
+     * @return è¿”å›ç”¨æˆ·å…¬é’¥
+     * å…¬é’¥ç”Ÿæˆ
+     */
     public static BigInteger  publicKeyGeneration(BigInteger sk)
     {
-    	//·µ»Ø¹«Ô¿ pk=(g^sk)mod n^2
-    	return g.modPow(sk, nsquare); 
+        //è¿”å›å…¬é’¥ pk=(g^sk)mod n^2
+        return g.modPow(sk, nsquare);
     }
 
-    /** 
-	 * @param m Ã÷ÎÄ
-	 * @return ·µ»ØÃÜÎÄ 
-	 * ¼ÓÃÜ
-	 */    
+    /**
+     * @param m æ˜æ–‡
+     * @return è¿”å›å¯†æ–‡
+     * åŠ å¯†
+     */
     public static Ciphertext Encryption(BigInteger m, BigInteger pk) {
-    	
-    	Ciphertext C0 = new Ciphertext();
-    	
-        //Ñ¡È¡Ëæ»úÊı
+
+        Ciphertext C0 = new Ciphertext();
+
+        //é€‰å–éšæœºæ•°
         Random random = new Random();
         BigInteger r = new BigInteger(512, random);
-        
 
-        //¼ÆËãÃÜÎÄµÄÖµ
+
+        //è®¡ç®—å¯†æ–‡çš„å€¼
         //C1=pk^r(1+mN)  C2=g^r mod n^2
         C0.C1 = (pk.modPow(r, nsquare)
-                   .multiply(m.multiply(n).add(BigInteger.ONE).mod(nsquare)));
+                .multiply(m.multiply(n).add(BigInteger.ONE).mod(nsquare)));
         C0.C2 = g.modPow(r, nsquare);
 
         return C0;
     }
 
-    /** 
-	 * @param x ´óÕûÊı
-	 * @return ·µ»Ø´óÕûÊı
-	 * º¯ÊıL(X)=(X-1)/n
-	 */
+    /**
+     * @param x å¤§æ•´æ•°
+     * @return è¿”å›å¤§æ•´æ•°
+     * å‡½æ•°L(X)=(X-1)/n
+     */
     public static BigInteger functionL(BigInteger x) {
         return (x.subtract(BigInteger.ONE)).divide(n);
     }
 
-    /** 
-   	 * @param C  ÃÜÎÄ    
-   	 * @param sk Ë½Ô¿
-   	 * @return ·µ»ØÃ÷ÎÄ
-   	 * ÓÃ»§½âÃÜ
-   	 */
+    /**
+     * @param C  å¯†æ–‡
+     * @param sk ç§é’¥
+     * @return è¿”å›æ˜æ–‡
+     * ç”¨æˆ·è§£å¯†
+     */
     public static BigInteger weakDecryption(Ciphertext C, BigInteger sk) {
-    	
-    	
+
+
         BigInteger m = new BigInteger("0");
 
-        //m=L(C1 / C2^sk mod nsquare)    	  
+        //m=L(C1 / C2^sk mod nsquare)
         m = functionL(C.C1.divide(C.C2.modPow(sk, nsquare)));
-        System.out.println("½âÃÜ(ÓÃ»§)m=" + m);
+        System.out.println("è§£å¯†(ç”¨æˆ·)m=" + m);
 
         return m;
     }
 
-    /** 
-   	 * @param C  ÃÜÎÄ    
-   	 * @return ·µ»ØÃ÷ÎÄ
-   	 * ÏµÍ³½âÃÜ
-   	 */
+    /**
+     * @param C  å¯†æ–‡
+     * @return è¿”å›æ˜æ–‡
+     * ç³»ç»Ÿè§£å¯†
+     */
     public static BigInteger strongDecryption(Ciphertext C) {
-    	
+
         BigInteger m = new BigInteger("0");
-        
-        //ÇólambdaµÄÄæÔª
+
+        //æ±‚lambdaçš„é€†å…ƒ
         lambda0 = lambda.modInverse(n);
 
         // m = [ L(C1^lambda mod nsquare)*lambda0 ]mod n
         BigInteger X1 = C.C1.modPow(lambda, nsquare);
         m = functionL(X1.multiply(lambda0)).mod(n);
-        System.out.println("½âÃÜ£¨ÏµÍ³£©m=" + m);
+        System.out.println("è§£å¯†ï¼ˆç³»ç»Ÿï¼‰m=" + m);
 
         return m;
     }
 
-    /** 
-   	 * @param C1  ÃÜÎÄ ×é¼ş   
-   	 * @return ·µ»ØÃ÷ÎÄ
-   	 * ·Ö²½½âÃÜµÚÒ»²½
-   	 */
+    /**
+     * @param C1  å¯†æ–‡ ç»„ä»¶
+     * @return è¿”å›æ˜æ–‡
+     * åˆ†æ­¥è§£å¯†ç¬¬ä¸€æ­¥
+     */
     public static BigInteger partialDecryptionOne(BigInteger C1) {
-    	
-      // ¼ÆËãµÚÒ»²½½âÃÜµÄÖĞ¼äÃÜÎÄ£º(C1^lambda1)mod n^2
+
+        // è®¡ç®—ç¬¬ä¸€æ­¥è§£å¯†çš„ä¸­é—´å¯†æ–‡ï¼š(C1^lambda1)mod n^2
         BigInteger C11 = C1.modPow(lambda1, nsquare);
         System.out.println("C11=" + C11);
 
         return C11;
     }
 
-    /** 
-   	 * @param C1  ÃÜÎÄ ×é¼ş   
-   	 * @param C11  µÚÒ»²½½âÃÜºóµÄ²¿·ÖÃÜÎÄ
-   	 * @return ·µ»ØÃ÷ÎÄ
-   	 * ·Ö²½½âÃÜµÚ¶ş²½
-   	 */
+    /**
+     * @param C1  å¯†æ–‡ ç»„ä»¶
+     * @param C11  ç¬¬ä¸€æ­¥è§£å¯†åçš„éƒ¨åˆ†å¯†æ–‡
+     * @return è¿”å›æ˜æ–‡
+     * åˆ†æ­¥è§£å¯†ç¬¬äºŒæ­¥
+     */
     public static BigInteger partialDecryptionTwo(BigInteger C11, BigInteger C1) {
-    	
-        //µÚ¶ş²½½âÃÜ   C12=(C1^lambda) mod n^2
-        // m= functionL(C11 * C12 mod n^2) 
+
+        //ç¬¬äºŒæ­¥è§£å¯†   C12=(C1^lambda) mod n^2
+        // m= functionL(C11 * C12 mod n^2)
         BigInteger C12 = C1.modPow(lambda2, nsquare);
         BigInteger m = functionL((C11.multiply(C12)).mod(nsquare));
-        System.out.println("·Ö²½½âÃÜm=" + m);
+        System.out.println("åˆ†æ­¥è§£å¯†m=" + m);
 
         return m;
     }
 
-    /** 
-   	 * @param C ÃÜÎÄ
-   	 * @return ·µ»ØË¢ĞÂºóµÄÃÜÎÄ
-   	 * ÃÜÎÄË¢ĞÂ
-   	 */
+    /**
+     * @param C å¯†æ–‡
+     * @return è¿”å›åˆ·æ–°åçš„å¯†æ–‡
+     * å¯†æ–‡åˆ·æ–°
+     */
     public static Ciphertext refreshCipher(Ciphertext C, BigInteger pk) {
-    	
+
         Ciphertext NC = new Ciphertext();
-        
-        //Éú³ÉËæ»úÊır1
+
+        //ç”Ÿæˆéšæœºæ•°r1
         Random random = new Random();
         BigInteger r1 = new BigInteger(512, random);
         // nc1=(pk.pow(r1.intValue())).multiply(C.C1);
@@ -243,38 +246,38 @@ public class PCTD{
         System.out.println("new cipher:");
         NC.printCipher();
         System.out.println("m:" + strongDecryption(NC));
-        
+
         return NC;
     }
 
     public static void main(String[] args) {
         // TODO Auto-generated method stub
-    	
+
         PCTD pctd = new PCTD();
-        
-        //¼ÓÃÜÃ÷ÎÄm=48(sk=9);
+
+        //åŠ å¯†æ˜æ–‡m=48(sk=9);
         BigInteger sk=new BigInteger("9");
         BigInteger pk=publicKeyGeneration(sk);
         Ciphertext C=PCTD.Encryption(new BigInteger("48"),pk);
         C.printCipher();
-        
-        //ÓÃ»§½âÃÜ
+
+        //ç”¨æˆ·è§£å¯†
         PCTD.weakDecryption(C, sk);
-        
-        //ÏµÍ³½âÃÜ
+
+        //ç³»ç»Ÿè§£å¯†
         PCTD.strongDecryption(C);
-        
-        //ÏµÍ³·Ö²½½âÃÜ
-        //µÚÒ»²½
+
+        //ç³»ç»Ÿåˆ†æ­¥è§£å¯†
+        //ç¬¬ä¸€æ­¥
         BigInteger C11=PCTD.partialDecryptionOne(C.C1);
-        
-        //µÚ¶ş²½
+
+        //ç¬¬äºŒæ­¥
         BigInteger C12=PCTD.partialDecryptionTwo(C11, C.C1);
-        
-        //ÃÜÎÄË¢ĞÂ
+
+        //å¯†æ–‡åˆ·æ–°
         Ciphertext C_n=PCTD.refreshCipher(C, pk);
-        //½âÃÜÑéÖ¤
+        //è§£å¯†éªŒè¯
         PCTD.strongDecryption(C_n);
-        
+
     }
 }
